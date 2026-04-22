@@ -1,0 +1,7 @@
+git clone https://github.com/ronterrence/jedha_group2.git
+
+pip install streamlit 
+ou
+python -m pip install streamlit
+
+puis: streamlit run app.py
