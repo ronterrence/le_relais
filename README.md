@@ -1,155 +1,179 @@
-# Assistant Social - Streamlit
+# Le Relais - Application Streamlit
 
-Application Streamlit en français pour orienter un utilisateur vers des organismes publics ou sociaux à partir d'un besoin et d'un code postal.
+Ce projet est une interface de chatbot d'accompagnement social construite avec **Streamlit**. L'application, nommée **Le Relais**, aide l'utilisateur a identifier des organismes locaux et des aides adaptees selon sa situation et son code postal.
 
-Le projet combine :
+L'interface est en francais et envoie les messages vers un webhook `n8n` execute en local.
 
-- une interface chatbot Streamlit ;
-- un webhook n8n pour traiter la demande ;
-- une recherche par code postal ;
-- un dossier de PDF pour les documents sources du projet ;
-- une configuration locale par fichier `.env`.
+## Fonctionnalites
 
-## Structure du projet
+- Interface de discussion avec historique conserve pendant la session
+- Saisie du code postal dans la barre laterale pour personnaliser les resultats
+- Bouton de reinitialisation de la conversation
+- Exemples de questions pour guider l'utilisateur
+- Connexion a un workflow `n8n` local pour generer les reponses
 
-```text
-jedha_group2/
-├── raw_pdfs/
-│   └── documents sources du projet
-├── streamlit/
-│   ├── app.py
-│   ├── main_app_streamlit_v2.py
-│   └── requirements.txt
-├── .env.example
-├── .gitignore
-├── README.md
-└── 00-Understanding_RAG.ipynb
-```
+## Fichier principal
+
+- `Main_App_Streamlit_V6.py`
+
+## Prerequis
+
+Vous aurez besoin de :
+
+- Python 3.9 ou plus
+- `streamlit`
+- `requests`
+- une instance locale de `n8n`
+- l'image `Chatbot.png` dans le meme dossier que l'application, ou un chemin mis a jour dans le code
 
 ## Installation
 
-Depuis la racine du projet :
-
 ```bash
-cd C:\Users\ron\Documents\project\jedha\jedha_group2
-```
-
-Installer les dépendances :
-
-```bash
-pip install -r streamlit/requirements.txt
-```
-
-## Configuration locale
-
-Le vrai fichier `.env` reste local et ne doit pas être poussé sur GitHub.
-
-Créer le fichier local :
-
-```cmd
-copy .env.example .env
-```
-
-Puis remplir les variables :
-
-```env
-N8N_WEBHOOK_URL=
-ORGANISMES_API_URL=
-LLM_API_URL=
-SUPABASE_URL=
-SUPABASE_KEY=
-```
-
-La variable principale utilisée par `main_app_streamlit_v2.py` est :
-
-```env
-N8N_WEBHOOK_URL=
+pip install streamlit requests
 ```
 
 ## Lancer l'application
 
-Depuis la racine du projet :
+Demarrer l'application Streamlit :
 
 ```bash
-streamlit run streamlit/main_app_streamlit_v2.py
+streamlit run Main_App_Streamlit_V6.py
 ```
 
-Ancienne version :
+## Lancer n8n
 
-```bash
-streamlit run streamlit/app.py
-```
-
-## Ajouter des PDF
-
-Placer les documents PDF dans :
+L'application attend ce webhook :
 
 ```text
-raw_pdfs/
+http://localhost:5678/webhook/DemoDay2
 ```
 
-Puis les ajouter à Git si les documents peuvent être partagés dans le dépôt :
+Demarrer `n8n` en local avant d'utiliser le chatbot :
 
 ```bash
-git add raw_pdfs
-git commit -m "Add project PDFs"
-git push origin main
+npx n8n start
 ```
 
-Si les PDF sont privés, volumineux ou protégés par droits, ne pas les pousser directement dans GitHub.
+## Fonctionnement
 
-## Variables et secrets
+1. L'utilisateur renseigne son code postal dans la barre laterale.
+2. L'utilisateur envoie un message dans l'interface de chat.
+3. L'application transmet l'historique de la conversation ainsi que le code postal au webhook `n8n`.
+4. Le webhook renvoie une reponse qui est ensuite affichee dans la discussion.
 
-Ne jamais pousser le fichier `.env`.
+Charge utile envoyee a `n8n` :
 
-Le dépôt contient uniquement :
-
-```text
-.env.example
+```json
+{
+  "messages": [
+    { "role": "user", "content": "..." }
+  ],
+  "CP": "69000"
+}
 ```
 
-Chaque membre du groupe doit créer son propre `.env` local à partir du modèle.
+## Remarques
 
-## Fonctionnement général
+- Si aucun code postal n'est saisi, l'envoi du message est bloque et un avertissement s'affiche.
+- L'historique des messages est stocke dans `st.session_state["messages"]`.
+- L'interface contient un style personnalise pour la barre laterale ainsi qu'un texte d'accueil en francais.
+- Si le webhook n'est pas disponible, l'application affiche une erreur de connexion dans le chat.
 
-1. L'utilisateur saisit son besoin et son code postal.
-2. L'application Streamlit envoie la demande au webhook n8n.
-3. Le webhook peut appeler les APIs, le RAG ou le modèle LLM.
-4. La réponse est affichée dans l'interface.
-5. Les organismes trouvés et le payload peuvent être visualisés dans l'application.
+## Exemples d'usage
 
-## Commandes Git utiles
+- Trouver des aides pour payer son logement
+- Rechercher une aide alimentaire a proximite
+- Identifier des pistes d'accompagnement pour un emploi etudiant
 
-Vérifier la branche :
+## Contexte du projet
 
-```bash
-git branch
-```
+Cette application semble avoir ete concue pour une demonstration ou un prototype local dans lequel :
 
-Vérifier les changements :
+- Streamlit fournit l'interface utilisateur
+- `n8n` orchestre la logique de traitement
+- les recommandations sont personnalisees a partir du code postal de l'utilisateur
 
-```bash
-git status
-```
+## Pistes d'amelioration
 
-Ajouter les fichiers sûrs :
+- ajouter un fichier `requirements.txt`
+- configurer l'URL du webhook via des variables d'environnement
+- valider la reponse du webhook avant affichage
+- ameliorer la gestion des erreurs si la reponse n'est pas en JSON
+- ajouter une section de deploiement
 
-```bash
-git add README.md .env.example .gitignore streamlit/main_app_streamlit_v2.py
-```
+## Licence
 
-Commit :
+Aucune licence n'est actuellement specifiee.
 
-```bash
-git commit -m "Update project documentation"
-```
 
-Push :
 
-```bash
-git push origin main
-```
+#English
+This project is a Streamlit-based social assistance chatbot interface named Le Relais. It helps users identify local organizations and support options based on their situation and postal code.
 
-## Avertissement
+The app is written in French and sends chat requests to an n8n webhook running locally.
 
-Ce projet est réalisé dans un cadre pédagogique. Les réponses de l'assistant ne remplacent pas un avis professionnel, administratif, juridique, médical ou social.
+Features
+Streamlit chat interface with persistent conversation history
+Postal-code input in the sidebar for localized results
+Reset button to clear the conversation
+Example prompts to guide first-time users
+Integration with a local n8n workflow for response generation
+Main File
+Main_App_Streamlit_V6.py
+Requirements
+You will need:
+
+Python 3.9+
+streamlit
+requests
+A local n8n instance
+The image asset Chatbot.png in the same folder as the app, or an updated path in the code
+Install
+pip install streamlit requests
+Run the App
+Start the Streamlit app:
+
+streamlit run Main_App_Streamlit_V6.py
+Run n8n
+The app expects this webhook endpoint:
+
+http://localhost:5678/webhook/DemoDay2
+Start n8n locally before using the chatbot:
+
+npx n8n start
+How It Works
+The user enters a postal code in the sidebar.
+The user sends a message through the chat input.
+The app sends the conversation history and postal code to the n8n webhook.
+The webhook returns a response that is displayed in the chat.
+Payload sent to n8n:
+
+{
+  "messages": [
+    { "role": "user", "content": "..." }
+  ],
+  "CP": "69000"
+}
+Notes
+If no postal code is entered, the app blocks chat submission and shows a warning.
+Conversation history is stored in st.session_state["messages"].
+The UI includes custom sidebar styling and onboarding text in French.
+If the webhook is unavailable, the app shows a connection error in the chat.
+Example Use Cases
+Finding housing assistance
+Locating food aid nearby
+Exploring job-related support for students
+Project Context
+This app appears to be designed for a local demo or prototype where:
+
+Streamlit provides the frontend
+n8n orchestrates backend logic
+localized support recommendations are generated from the user's postal code
+Suggested Improvements
+Add a requirements.txt
+Add environment-based configuration for the webhook URL
+Validate webhook responses before rendering
+Improve error handling for non-JSON responses
+Add deployment instructions
+License
+No license is currently specified.
